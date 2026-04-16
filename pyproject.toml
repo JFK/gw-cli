@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=75.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gw-cli"
+version = "0.1.0"
+description = "Google Workspace CLI for Claude Code"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.3",
+    "google-auth>=2.49",
+    "google-auth-oauthlib>=1.3",
+    "google-api-python-client>=2.194",
+    "rich>=15.0",
+]
+
+[project.scripts]
+gw = "gw.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
