@@ -7,7 +7,9 @@
     "skills/gw-calendar.md",
     "skills/gw-mail.md",
     "skills/gw-drive.md",
-    "skills/gw-workflow.md"
+    "skills/gw-workflow.md",
+    "skills/gw-setup.md",
+    "skills/gw-loop.md"
   ],
   "setup": {
     "install": "pip install -e .",
