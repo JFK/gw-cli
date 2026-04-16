@@ -2,6 +2,7 @@ import click
 
 from gw.auth import auth
 from gw.calendar import cal
+from gw.drive import drive
 from gw.gmail import mail
 
 
@@ -28,6 +29,7 @@ def main(ctx: click.Context, output_json: bool, account: str | None, config_dir:
 
 main.add_command(auth)
 main.add_command(cal)
+main.add_command(drive)
 main.add_command(mail)
 
 
