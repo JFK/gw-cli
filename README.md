@@ -2,6 +2,16 @@
 
 Google Workspace CLI for Claude Code. Manage Calendar, Gmail, and Drive across multiple Google accounts.
 
+## Features
+
+- **Multi-account support** — Register multiple Google accounts (personal, work, client projects) and switch between them instantly
+- **Calendar** — List, create, update, delete events. Google Meet setup. Free/busy check across accounts
+- **Gmail** — Search, read, send, reply. Label management. Mark read/unread. Attachment download and save to Drive
+- **Drive** — List, search, upload, create Google Docs/Sheets/Slides. Share/unshare files
+- **Claude Code integration** — All commands support `--json` output for seamless skill parsing
+- **Periodic monitoring** — Use with `/loop` for unread email checks, calendar reminders
+- **WSL2 compatible** — Automatic fallback to manual OAuth flow when localhost callback is unreachable
+
 ## Install
 
 ```bash
