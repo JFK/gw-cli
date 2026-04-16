@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -45,6 +46,7 @@ class GwConfig:
             "loop": self.loop,
         }
         self.config_path.write_text(json.dumps(data, indent=2, ensure_ascii=False))
+        os.chmod(self.config_path, 0o600)
 
     def add_account(self, email: str, credentials_path: str) -> None:
         for acct in self.accounts:

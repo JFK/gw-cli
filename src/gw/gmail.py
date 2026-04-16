@@ -262,8 +262,9 @@ def download(ctx: click.Context, message_id: str, attachment_id: str, out: str) 
 
     data = base64.urlsafe_b64decode(att["data"])
     from pathlib import Path
-    Path(out).write_bytes(data)
-    click.echo(format_output(f"Downloaded to {out}", output_json=output_json, account=account))
+    out_path = Path(out).resolve()
+    out_path.write_bytes(data)
+    click.echo(format_output(f"Downloaded to {out_path}", output_json=output_json, account=account))
 
 
 @mail.command("to-drive")

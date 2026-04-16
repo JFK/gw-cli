@@ -6,6 +6,8 @@ build/
 .venv/
 credentials/
 tokens/
+.env
+.env.*
 *.json
 !.claude-plugin/*.json
 !pyproject.toml
