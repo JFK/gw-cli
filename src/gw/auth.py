@@ -20,10 +20,10 @@ SCOPES = [
 
 
 def _get_user_email(credentials) -> str:
-    """Fetch the authenticated user's email via OAuth2 userinfo."""
-    service = build("oauth2", "v2", credentials=credentials)
-    user_info = service.userinfo().get().execute()
-    return user_info["email"]
+    """Fetch the authenticated user's email via Gmail API."""
+    service = build("gmail", "v1", credentials=credentials)
+    profile = service.users().getProfile(userId="me").execute()
+    return profile["emailAddress"]
 
 
 def _resolve_config_dir(ctx: click.Context, config_dir: Path | None) -> Path:
@@ -59,7 +59,18 @@ def login(ctx: click.Context, credentials: Path, config_dir: Path | None) -> Non
     cfg = GwConfig(resolved_dir)
 
     flow = InstalledAppFlow.from_client_secrets_file(str(credentials), SCOPES)
-    flow.run_local_server(port=0)
+
+    try:
+        flow.run_local_server(port=0, timeout_seconds=10)
+    except Exception:
+        # Fallback for WSL2/remote: manual URL + paste redirect URL
+        auth_url, _ = flow.authorization_url(prompt="consent")
+        click.echo(f"\nOpen this URL in your browser:\n\n{auth_url}\n")
+        click.echo("After authorizing, you will be redirected to a localhost URL.")
+        click.echo("Copy the FULL URL from the browser address bar and paste it here:\n")
+        redirect_url = click.prompt("Redirect URL")
+        flow.fetch_token(authorization_response=redirect_url)
+
     creds = flow.credentials
     email = _get_user_email(creds)
 
