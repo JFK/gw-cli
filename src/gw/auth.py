@@ -7,6 +7,7 @@ from pathlib import Path
 
 import click
 from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
 
 from gw.config import DEFAULT_CONFIG_DIR, GwConfig
 
@@ -20,7 +21,6 @@ SCOPES = [
 
 def _get_user_email(credentials) -> str:
     """Fetch the authenticated user's email via OAuth2 userinfo."""
-    from googleapiclient.discovery import build
     service = build("oauth2", "v2", credentials=credentials)
     user_info = service.userinfo().get().execute()
     return user_info["email"]
@@ -127,3 +127,27 @@ def remove(ctx: click.Context, email: str, config_dir: Path | None) -> None:
     cfg = GwConfig(resolved_dir)
     cfg.remove_account(email)
     click.echo(f"Removed {email}")
+
+
+def build_service(cfg: GwConfig, email: str, api_name: str, api_version: str):
+    """Build an authenticated Google API service for the given account."""
+    from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
+
+    token_path = cfg.get_token_path(email)
+    if not token_path.exists():
+        raise RuntimeError(
+            f"No token found for {email}. Run 'gw auth login --credentials <path>' first."
+        )
+
+    creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
+
+    if creds.expired and creds.refresh_token:
+        try:
+            creds.refresh(Request())
+            token_path.write_text(creds.to_json())
+            os.chmod(token_path, 0o600)
+        except Exception:
+            pass  # proceed with existing token
+
+    return build(api_name, api_version, credentials=creds)
