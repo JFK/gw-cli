@@ -2,6 +2,7 @@ import click
 
 from gw.auth import auth
 from gw.calendar import cal
+from gw.gmail import mail
 
 
 @click.group()
@@ -27,6 +28,7 @@ def main(ctx: click.Context, output_json: bool, account: str | None, config_dir:
 
 main.add_command(auth)
 main.add_command(cal)
+main.add_command(mail)
 
 
 if __name__ == "__main__":
