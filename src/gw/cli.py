@@ -1,7 +1,10 @@
+import json as json_module
+
 import click
 
 from gw.auth import auth
 from gw.calendar import cal
+from gw.config import DEFAULT_CONFIG_DIR, GwConfig
 from gw.drive import drive
 from gw.gmail import mail
 
@@ -31,6 +34,62 @@ main.add_command(auth)
 main.add_command(cal)
 main.add_command(drive)
 main.add_command(mail)
+
+
+@click.group("config")
+@click.pass_context
+def config_group(ctx: click.Context) -> None:
+    """Manage gw-cli configuration."""
+    pass
+
+
+@config_group.command()
+@click.pass_context
+def show(ctx: click.Context) -> None:
+    """Show current configuration."""
+    config_dir = ctx.obj.get("config_dir", DEFAULT_CONFIG_DIR)
+    cfg = GwConfig(config_dir)
+    data = {
+        "active_account": cfg.active_account,
+        "accounts": [a["email"] for a in cfg.accounts],
+        "defaults": cfg.defaults,
+        "loop": cfg.loop,
+    }
+    click.echo(json_module.dumps(data, indent=2, ensure_ascii=False))
+
+
+@config_group.command("set")
+@click.argument("key")
+@click.argument("value")
+@click.pass_context
+def set_config(ctx: click.Context, key: str, value: str) -> None:
+    """Set a config value (e.g. defaults.calendar.days 14)."""
+    config_dir = ctx.obj.get("config_dir", DEFAULT_CONFIG_DIR)
+    cfg = GwConfig(config_dir)
+
+    parts = key.split(".")
+    if len(parts) == 3 and parts[0] == "defaults":
+        converted: object = value
+        try:
+            converted = int(value)
+        except ValueError:
+            try:
+                converted = float(value)
+            except ValueError:
+                if value.lower() in ("true", "false"):
+                    converted = value.lower() == "true"
+                elif value.lower() == "null":
+                    converted = None
+
+        cfg.set_default(parts[1], parts[2], converted)
+        cfg.save()
+        click.echo(f"Set {key} = {converted}")
+    else:
+        click.echo(f"Unknown config key: {key}", err=True)
+        raise SystemExit(1)
+
+
+main.add_command(config_group)
 
 
 if __name__ == "__main__":
