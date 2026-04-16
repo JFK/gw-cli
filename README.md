@@ -1,6 +1,24 @@
 # gw-cli
 
-Google Workspace CLI for Claude Code. Manage Calendar, Gmail, and Drive across multiple Google accounts.
+> **Google Workspace CLI for Claude Code — manage Calendar, Gmail, and Drive across multiple Google accounts.**
+
+`gw-cli` is a [Claude Code](https://claude.com/claude-code) plugin that brings Google Workspace into your terminal. Register multiple OAuth accounts, switch between them instantly, and let Claude Code operate your calendar, email, and files through natural language.
+
+## 60-second quickstart
+
+```text
+# In any Claude Code session:
+/plugin marketplace add JFK/gw-cli
+/plugin install gw-cli
+
+# Setup (one-time):
+gw auth login --credentials ./credentials.json
+
+# Then use naturally:
+"Show me my unread emails"
+"Schedule a meeting tomorrow at 10am with Meet"
+"What's on my calendar this week?"
+```
 
 ## Features
 
@@ -12,7 +30,37 @@ Google Workspace CLI for Claude Code. Manage Calendar, Gmail, and Drive across m
 - **Periodic monitoring** — Use with `/loop` for unread email checks, calendar reminders
 - **WSL2 compatible** — Automatic fallback to manual OAuth flow when localhost callback is unreachable
 
+## Required dependencies
+
+| Tool | Required | Why |
+|---|---|---|
+| Python 3.10+ | yes | Runtime |
+| `pip` | yes | Package installation |
+| `gcloud` CLI | recommended | GCP project setup and API enablement |
+| [Claude Code](https://claude.com/claude-code) | recommended | Plugin integration and natural language interface |
+
 ## Install
+
+### As a Claude Code plugin (recommended)
+
+```text
+/plugin marketplace add JFK/gw-cli
+/plugin install gw-cli
+```
+
+The plugin auto-installs the Python CLI and registers 7 skills:
+
+| Skill | Description |
+|---|---|
+| `/gw-setup` | Guided first-time Google Cloud setup |
+| `/gw-auth` | Account management (login, switch, list, remove) |
+| `/gw-calendar` | Calendar operations |
+| `/gw-mail` | Gmail operations |
+| `/gw-drive` | Drive operations |
+| `/gw-workflow` | Cross-service workflows (email attachment to Drive, etc.) |
+| `/gw-loop` | Periodic monitoring setup |
+
+### Standalone CLI
 
 ```bash
 pip install git+https://github.com/JFK/gw-cli.git
@@ -74,15 +122,29 @@ gw mail list --query "is:unread" --limit 5
 
 ## Usage
 
+### Available commands
+
+```
+gw auth     login, list, status, switch, remove
+gw cal      list, get, create, update, delete, free
+gw mail     list, read, send, reply, labels, label, mark, attachments, download, to-drive
+gw drive    list, upload, create, share, unshare
+gw config   show, set
+```
+
+### Calendar
+
 ```bash
-# Calendar
 gw cal list --days 7
 gw cal create --title "Meeting" --start "2026-04-17 10:00" --end "2026-04-17 11:00" --meet
 gw cal create --title "1on1" --start "2026-04-18 14:00" --end "2026-04-18 14:30" --meet --attendee colleague@example.com
 gw cal free --date 2026-04-17
 gw cal delete EVENT_ID
+```
 
-# Gmail
+### Gmail
+
+```bash
 gw mail list --query "is:unread"
 gw mail read MESSAGE_ID
 gw mail send --to "user@example.com" --subject "Hello" --body "Hi there"
@@ -90,23 +152,32 @@ gw mail reply MESSAGE_ID --body "Thanks!"
 gw mail mark MESSAGE_ID --read
 gw mail attachments MESSAGE_ID
 gw mail to-drive MESSAGE_ID --attachment-id ATT_ID --folder FOLDER_ID
+```
 
-# Drive
+### Drive
+
+```bash
 gw drive list
 gw drive list --query "name contains 'report'"
 gw drive upload ./file.pdf
 gw drive create --type doc --title "New Document"
 gw drive share FILE_ID --email user@example.com --role writer
 gw drive unshare FILE_ID --email user@example.com
+```
 
-# Multi-account
-gw auth login --credentials ./work-credentials.json
-gw auth list
-gw auth switch work@company.com
-gw mail list                                    # Uses active account
-gw mail list --account personal@gmail.com       # Override for one command
+### Multi-account
 
-# Config
+```bash
+gw auth login --credentials ./work-credentials.json    # Add another account
+gw auth list                                            # Show all accounts
+gw auth switch work@company.com                         # Switch active account
+gw mail list                                            # Uses active account
+gw mail list --account personal@gmail.com               # Override for one command
+```
+
+### Config
+
+```bash
 gw config show
 gw config set defaults.calendar.days 14
 gw config set defaults.mail.limit 50
@@ -124,23 +195,9 @@ gw mail list --query "is:unread" --json
 Human-readable output always shows the active account:
 
 ```
-[fumikazu.kiyota@gmail.com] 
+[fumikazu.kiyota@gmail.com]
   evt1 | Team standup | 2026-04-17T10:00:00+09:00 | ...
 ```
-
-## Claude Code Plugin
-
-Install as a Claude Code plugin:
-
-```bash
-claude plugin add github:JFK/gw-cli
-```
-
-Then use naturally:
-- "Show me my unread emails"
-- "Schedule a meeting tomorrow at 10am with Meet"
-- "Save that email attachment to Drive"
-- "What's on my calendar this week?"
 
 ## Periodic Monitoring
 
@@ -151,7 +208,7 @@ Use with the `/loop` skill for continuous monitoring:
 /loop 30m gw cal list --days 1 --json
 ```
 
-## Config
+## Config storage
 
 Config stored at `~/.config/google-workspace-cli/config.json`.
 

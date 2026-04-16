@@ -5,9 +5,30 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "gw-cli"
 version = "0.1.0"
-description = "Google Workspace CLI for Claude Code"
+description = "Google Workspace CLI for Claude Code — Calendar, Gmail, Drive with multi-account OAuth support"
 license = "MIT"
 requires-python = ">=3.10"
+readme = "README.md"
+keywords = ["google-workspace", "gmail", "calendar", "google-drive", "cli", "claude-code", "oauth2", "multi-account"]
+authors = [
+    {name = "Fumikazu Kiyota", email = "fumikazu.kiyota@gmail.com"},
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Communications :: Email",
+    "Topic :: Office/Business :: Scheduling",
+]
+
+[project.urls]
+Homepage = "https://github.com/JFK/gw-cli"
+Repository = "https://github.com/JFK/gw-cli"
+Issues = "https://github.com/JFK/gw-cli/issues"
 dependencies = [
     "click>=8.3",
     "google-auth>=2.49",
