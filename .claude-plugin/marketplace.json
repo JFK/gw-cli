@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "gw-cli",
+  "description": "Google Workspace CLI for Claude Code — manage Calendar, Gmail, Drive with multi-account support",
+  "owner": {
+    "name": "Fumikazu Kiyota",
+    "email": "fumikazu.kiyota@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "gw-cli",
+      "source": "./",
+      "version": "0.1.0",
+      "category": "productivity"
+    }
+  ]
+}

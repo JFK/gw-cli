@@ -7,6 +7,6 @@ build/
 credentials/
 tokens/
 *.json
-!plugin.json
+!.claude-plugin/*.json
 !pyproject.toml
 .pytest_cache/

@@ -1,0 +1,22 @@
+{
+  "name": "gw-cli",
+  "version": "0.1.0",
+  "description": "Google Workspace CLI for Claude Code — Calendar, Gmail, Drive with multi-account support",
+  "author": {
+    "name": "Fumikazu Kiyota",
+    "url": "https://github.com/JFK"
+  },
+  "repository": "https://github.com/JFK/gw-cli",
+  "license": "MIT",
+  "keywords": [
+    "google-workspace",
+    "calendar",
+    "gmail",
+    "drive",
+    "multi-account",
+    "oauth",
+    "cli",
+    "productivity"
+  ],
+  "commands": ["./commands/"]
+}
