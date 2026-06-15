@@ -1,4 +1,5 @@
 """Regression tests for bugs found in the full-codebase debug review."""
+
 import json
 import re
 import sys
@@ -51,10 +52,19 @@ def test_mail_list_since_converts_iso_for_gmail(mock_build: MagicMock, sample_co
     mock_build.return_value = mock_service
 
     runner = CliRunner()
-    result = runner.invoke(main, [
-        "--config-dir", str(sample_config),
-        "mail", "list", "--query", "is:unread", "--since", "2026-06-15T10:00:00",
-    ])
+    result = runner.invoke(
+        main,
+        [
+            "--config-dir",
+            str(sample_config),
+            "mail",
+            "list",
+            "--query",
+            "is:unread",
+            "--since",
+            "2026-06-15T10:00:00",
+        ],
+    )
     assert result.exit_code == 0, result.output
     q = mock_service.users().messages().list.call_args.kwargs["q"]
     # Gmail's after: does not accept ISO datetime; must be epoch seconds.
@@ -93,9 +103,16 @@ def test_mail_attachments_finds_nested(mock_build: MagicMock, sample_config: Pat
     mock_build.return_value = mock_service
 
     runner = CliRunner()
-    result = runner.invoke(main, [
-        "--config-dir", str(sample_config), "mail", "attachments", "msg1",
-    ])
+    result = runner.invoke(
+        main,
+        [
+            "--config-dir",
+            str(sample_config),
+            "mail",
+            "attachments",
+            "msg1",
+        ],
+    )
     assert result.exit_code == 0, result.output
     assert "nested.pdf" in result.output
 
@@ -107,9 +124,16 @@ def test_mail_attachments_finds_nested(mock_build: MagicMock, sample_config: Pat
 def test_mail_mark_requires_a_flag(mock_build: MagicMock, sample_config: Path) -> None:
     mock_build.return_value = MagicMock()
     runner = CliRunner()
-    result = runner.invoke(main, [
-        "--config-dir", str(sample_config), "mail", "mark", "msg1",
-    ])
+    result = runner.invoke(
+        main,
+        [
+            "--config-dir",
+            str(sample_config),
+            "mail",
+            "mark",
+            "msg1",
+        ],
+    )
     assert result.exit_code != 0
     assert "read" in result.output.lower()
 
@@ -118,9 +142,18 @@ def test_mail_mark_requires_a_flag(mock_build: MagicMock, sample_config: Path) -
 def test_mail_mark_rejects_both_flags(mock_build: MagicMock, sample_config: Path) -> None:
     mock_build.return_value = MagicMock()
     runner = CliRunner()
-    result = runner.invoke(main, [
-        "--config-dir", str(sample_config), "mail", "mark", "msg1", "--read", "--unread",
-    ])
+    result = runner.invoke(
+        main,
+        [
+            "--config-dir",
+            str(sample_config),
+            "mail",
+            "mark",
+            "msg1",
+            "--read",
+            "--unread",
+        ],
+    )
     assert result.exit_code != 0
 
 
@@ -146,10 +179,13 @@ def test_build_service_reraises_on_refresh_failure(sample_config: Path) -> None:
     mock_creds.refresh_token = "refresh-token"
     mock_creds.refresh.side_effect = Exception("token revoked")
 
-    with patch(
-        "google.oauth2.credentials.Credentials.from_authorized_user_file",
-        return_value=mock_creds,
-    ), patch("google.auth.transport.requests.Request"):
+    with (
+        patch(
+            "google.oauth2.credentials.Credentials.from_authorized_user_file",
+            return_value=mock_creds,
+        ),
+        patch("google.auth.transport.requests.Request"),
+    ):
         with pytest.raises(RuntimeError, match="re-authenticate"):
             build_service(cfg, "test@gmail.com", "calendar", "v3")
 
@@ -164,9 +200,17 @@ def test_cal_free_covers_full_day(mock_build: MagicMock, sample_config: Path) ->
     mock_build.return_value = mock_service
 
     runner = CliRunner()
-    result = runner.invoke(main, [
-        "--config-dir", str(sample_config), "cal", "free", "--date", "2026-04-17",
-    ])
+    result = runner.invoke(
+        main,
+        [
+            "--config-dir",
+            str(sample_config),
+            "cal",
+            "free",
+            "--date",
+            "2026-04-17",
+        ],
+    )
     assert result.exit_code == 0, result.output
     body = mock_service.freebusy().query.call_args.kwargs["body"]
     # End of window must be the next day's start, not 23:59 (which drops the last minute).
@@ -178,19 +222,28 @@ def test_cal_free_covers_full_day(mock_build: MagicMock, sample_config: Path) ->
 
 @patch("gw.gmail.build_service")
 def test_mail_list_zero_limit_is_respected(mock_build: MagicMock, config_dir: Path) -> None:
-    _write_config(config_dir, {
-        "calendar": {"days": 7, "timezone": "Asia/Tokyo"},
-        "mail": {"limit": 0, "check_query": "is:unread"},
-        "drive": {"default_folder": None},
-    })
+    _write_config(
+        config_dir,
+        {
+            "calendar": {"days": 7, "timezone": "Asia/Tokyo"},
+            "mail": {"limit": 0, "check_query": "is:unread"},
+            "drive": {"default_folder": None},
+        },
+    )
     mock_service = MagicMock()
     mock_service.users().messages().list().execute.return_value = {"messages": []}
     mock_build.return_value = mock_service
 
     runner = CliRunner()
-    result = runner.invoke(main, [
-        "--config-dir", str(config_dir), "mail", "list",
-    ])
+    result = runner.invoke(
+        main,
+        [
+            "--config-dir",
+            str(config_dir),
+            "mail",
+            "list",
+        ],
+    )
     assert result.exit_code == 0, result.output
     assert mock_service.users().messages().list.call_args.kwargs["maxResults"] == 0
 
@@ -202,11 +255,21 @@ def test_mail_list_zero_limit_is_respected(mock_build: MagicMock, config_dir: Pa
 def test_cal_create_bad_datetime_is_friendly(mock_build: MagicMock, sample_config: Path) -> None:
     mock_build.return_value = MagicMock()
     runner = CliRunner()
-    result = runner.invoke(main, [
-        "--config-dir", str(sample_config),
-        "cal", "create", "--title", "X",
-        "--start", "4/17 10am", "--end", "2026-04-17 11:00",
-    ])
+    result = runner.invoke(
+        main,
+        [
+            "--config-dir",
+            str(sample_config),
+            "cal",
+            "create",
+            "--title",
+            "X",
+            "--start",
+            "4/17 10am",
+            "--end",
+            "2026-04-17 11:00",
+        ],
+    )
     assert result.exit_code != 0
     assert result.exception is None or isinstance(result.exception, SystemExit)
     assert "YYYY-MM-DD" in result.output
@@ -218,9 +281,17 @@ def test_cal_create_bad_datetime_is_friendly(mock_build: MagicMock, sample_confi
 
 def test_cli_entry_handles_runtime_error_friendly(config_dir: Path, monkeypatch, capsys) -> None:
     # Empty config dir -> no active account -> resolve_account raises RuntimeError.
-    monkeypatch.setattr(sys, "argv", [
-        "gw", "--config-dir", str(config_dir), "cal", "list",
-    ])
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "gw",
+            "--config-dir",
+            str(config_dir),
+            "cal",
+            "list",
+        ],
+    )
     with pytest.raises(SystemExit) as exc_info:
         cli()
     assert exc_info.value.code == 1
@@ -230,9 +301,17 @@ def test_cli_entry_handles_runtime_error_friendly(config_dir: Path, monkeypatch,
 
 
 def test_cli_entry_passes_through_success(sample_config: Path, monkeypatch, capsys) -> None:
-    monkeypatch.setattr(sys, "argv", [
-        "gw", "--config-dir", str(sample_config), "config", "show",
-    ])
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "gw",
+            "--config-dir",
+            str(sample_config),
+            "config",
+            "show",
+        ],
+    )
     with patch("gw.auth.build_service"):
         # config show needs no network; should exit cleanly (0 or no SystemExit).
         try:

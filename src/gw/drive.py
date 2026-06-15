@@ -45,18 +45,29 @@ def list_files(ctx: click.Context, folder: str | None, query: str | None) -> Non
     q_parts.append("trashed = false")
     q = " and ".join(q_parts)
 
-    result = service.files().list(
-        q=q, fields="files(id,name,mimeType,modifiedTime,size,webViewLink)",
-        orderBy="modifiedTime desc", pageSize=50,
-    ).execute()
+    result = (
+        service.files()
+        .list(
+            q=q,
+            fields="files(id,name,mimeType,modifiedTime,size,webViewLink)",
+            orderBy="modifiedTime desc",
+            pageSize=50,
+        )
+        .execute()
+    )
 
     files = []
     for f in result.get("files", []):
-        files.append({
-            "id": f["id"], "name": f["name"], "type": f["mimeType"],
-            "modified": f.get("modifiedTime", ""), "size": f.get("size", ""),
-            "link": f.get("webViewLink", ""),
-        })
+        files.append(
+            {
+                "id": f["id"],
+                "name": f["name"],
+                "type": f["mimeType"],
+                "modified": f.get("modifiedTime", ""),
+                "size": f.get("size", ""),
+                "link": f.get("webViewLink", ""),
+            }
+        )
 
     click.echo(format_output(files, output_json=output_json, account=account))
 
@@ -83,13 +94,19 @@ def upload(ctx: click.Context, file_path: str, folder: str | None) -> None:
         file_metadata["parents"] = [folder]
 
     media = MediaFileUpload(str(path), mimetype=mime_type)
-    result = service.files().create(
-        body=file_metadata, media_body=media, fields="id,name,webViewLink"
-    ).execute()
+    result = service.files().create(body=file_metadata, media_body=media, fields="id,name,webViewLink").execute()
 
-    click.echo(format_output({
-        "id": result["id"], "name": result["name"], "link": result.get("webViewLink", ""),
-    }, output_json=output_json, account=account))
+    click.echo(
+        format_output(
+            {
+                "id": result["id"],
+                "name": result["name"],
+                "link": result.get("webViewLink", ""),
+            },
+            output_json=output_json,
+            account=account,
+        )
+    )
 
 
 @drive.command()
@@ -111,9 +128,17 @@ def create(ctx: click.Context, doc_type: str, title: str, folder: str | None) ->
 
     result = service.files().create(body=file_metadata, fields="id,name,webViewLink").execute()
 
-    click.echo(format_output({
-        "id": result["id"], "name": result["name"], "link": result.get("webViewLink", ""),
-    }, output_json=output_json, account=account))
+    click.echo(
+        format_output(
+            {
+                "id": result["id"],
+                "name": result["name"],
+                "link": result.get("webViewLink", ""),
+            },
+            output_json=output_json,
+            account=account,
+        )
+    )
 
 
 @drive.command()
@@ -130,7 +155,8 @@ def share(ctx: click.Context, file_id: str, email: str, role: str) -> None:
 
     service = build_service(cfg, account, "drive", "v3")
     service.permissions().create(
-        fileId=file_id, body={"type": "user", "role": role, "emailAddress": email},
+        fileId=file_id,
+        body={"type": "user", "role": role, "emailAddress": email},
     ).execute()
     click.echo(format_output(f"Shared {file_id} with {email} as {role}.", output_json=output_json, account=account))
 
@@ -147,9 +173,7 @@ def unshare(ctx: click.Context, file_id: str, email: str) -> None:
     output_json = ctx.obj.get("json", False)
 
     service = build_service(cfg, account, "drive", "v3")
-    perms = service.permissions().list(
-        fileId=file_id, fields="permissions(id,emailAddress,role)"
-    ).execute()
+    perms = service.permissions().list(fileId=file_id, fields="permissions(id,emailAddress,role)").execute()
 
     perm_id = None
     for p in perms.get("permissions", []):

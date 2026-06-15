@@ -28,6 +28,7 @@ def main(ctx: click.Context, output_json: bool, account: str | None, config_dir:
     ctx.obj["account"] = account
     if config_dir:
         from pathlib import Path
+
         ctx.obj["config_dir"] = Path(config_dir)
 
 

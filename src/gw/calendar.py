@@ -29,7 +29,7 @@ def list_events(ctx: click.Context, days: int | None) -> None:
 
     if days is None:
         default_days = cfg.get_default("calendar", "days")
-        days = default_days if default_days is not None else 7
+        days = int(default_days) if default_days is not None else 7
 
     service = build_service(cfg, account, "calendar", "v3")
     tz = cfg.get_default("calendar", "timezone") or "Asia/Tokyo"
@@ -37,26 +37,32 @@ def list_events(ctx: click.Context, days: int | None) -> None:
     now = datetime.now(timezone.utc).isoformat()
     end = (datetime.now(timezone.utc) + timedelta(days=days)).isoformat()
 
-    result = service.events().list(
-        calendarId="primary",
-        timeMin=now,
-        timeMax=end,
-        singleEvents=True,
-        orderBy="startTime",
-        timeZone=tz,
-    ).execute()
+    result = (
+        service.events()
+        .list(
+            calendarId="primary",
+            timeMin=now,
+            timeMax=end,
+            singleEvents=True,
+            orderBy="startTime",
+            timeZone=tz,
+        )
+        .execute()
+    )
 
     events = []
     for item in result.get("items", []):
         start = item.get("start", {}).get("dateTime", item.get("start", {}).get("date", ""))
         end_time = item.get("end", {}).get("dateTime", item.get("end", {}).get("date", ""))
-        events.append({
-            "id": item["id"],
-            "summary": item.get("summary", "(No title)"),
-            "start": start,
-            "end": end_time,
-            "meet": item.get("hangoutLink", ""),
-        })
+        events.append(
+            {
+                "id": item["id"],
+                "summary": item.get("summary", "(No title)"),
+                "start": start,
+                "end": end_time,
+                "meet": item.get("hangoutLink", ""),
+            }
+        )
 
     click.echo(format_output(events, output_json=output_json, account=account))
 
@@ -121,9 +127,15 @@ def create(ctx: click.Context, title: str, start: str, end: str, meet: bool, att
 
     service = build_service(cfg, account, "calendar", "v3")
     conference_version = 1 if meet else 0
-    result = service.events().insert(
-        calendarId="primary", body=body, conferenceDataVersion=conference_version,
-    ).execute()
+    result = (
+        service.events()
+        .insert(
+            calendarId="primary",
+            body=body,
+            conferenceDataVersion=conference_version,
+        )
+        .execute()
+    )
 
     data = {
         "id": result["id"],
@@ -193,9 +205,7 @@ def free(ctx: click.Context, date: str, account_override: str | None) -> None:
     try:
         next_day = (datetime.strptime(date, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
     except ValueError as exc:
-        raise click.BadParameter(
-            f"Invalid date {date!r}; expected format 'YYYY-MM-DD'."
-        ) from exc
+        raise click.BadParameter(f"Invalid date {date!r}; expected format 'YYYY-MM-DD'.") from exc
 
     service = build_service(cfg, account, "calendar", "v3")
     body = {
@@ -220,11 +230,10 @@ def free(ctx: click.Context, date: str, account_override: str | None) -> None:
 def _parse_datetime(dt_str: str, tz_name: str) -> str:
     """Parse 'YYYY-MM-DD HH:MM' into RFC3339 with timezone offset."""
     from zoneinfo import ZoneInfo
+
     try:
         dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M")
     except ValueError as exc:
-        raise click.BadParameter(
-            f"Invalid datetime {dt_str!r}; expected format 'YYYY-MM-DD HH:MM'."
-        ) from exc
+        raise click.BadParameter(f"Invalid datetime {dt_str!r}; expected format 'YYYY-MM-DD HH:MM'.") from exc
     dt = dt.replace(tzinfo=ZoneInfo(tz_name))
     return dt.isoformat()

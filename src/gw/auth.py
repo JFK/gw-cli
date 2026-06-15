@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 import shutil
 import sys
@@ -38,9 +37,7 @@ def _can_auto_open_browser() -> bool:
                 return False
     except OSError:
         pass
-    if sys.platform.startswith("linux") and not (
-        os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")
-    ):
+    if sys.platform.startswith("linux") and not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
         return False
     return True
 
@@ -97,9 +94,7 @@ def login(ctx: click.Context, credentials: Path, config_dir: Path | None) -> Non
         flow.run_local_server(
             port=0,
             open_browser=_can_auto_open_browser(),
-            authorization_prompt_message=(
-                "\nOpen this URL in your browser to authorize:\n\n{url}\n"
-            ),
+            authorization_prompt_message=("\nOpen this URL in your browser to authorize:\n\n{url}\n"),
             timeout_seconds=300,
         )
     except Exception:
@@ -187,9 +182,7 @@ def build_service(cfg: GwConfig, email: str, api_name: str, api_version: str):
 
     token_path = cfg.get_token_path(email)
     if not token_path.exists():
-        raise RuntimeError(
-            f"No token found for {email}. Run 'gw auth login --credentials <path>' first."
-        )
+        raise RuntimeError(f"No token found for {email}. Run 'gw auth login --credentials <path>' first.")
 
     creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
 
@@ -200,8 +193,7 @@ def build_service(cfg: GwConfig, email: str, api_name: str, api_version: str):
             os.chmod(token_path, 0o600)
         except Exception as exc:
             raise RuntimeError(
-                f"Token refresh failed for {email}. "
-                "Run 'gw auth login --credentials <path>' to re-authenticate."
+                f"Token refresh failed for {email}. Run 'gw auth login --credentials <path>' to re-authenticate."
             ) from exc
 
     return build(api_name, api_version, credentials=creds)

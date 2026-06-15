@@ -18,10 +18,12 @@ def _make_mock_flow() -> MagicMock:
     mock_flow.credentials.client_id = "test-client-id"
     mock_flow.credentials.client_secret = "test-secret"
     mock_flow.credentials.scopes = ["https://www.googleapis.com/auth/calendar"]
-    mock_flow.credentials.to_json.return_value = json.dumps({
-        "token": "access-token",
-        "refresh_token": "refresh-token",
-    })
+    mock_flow.credentials.to_json.return_value = json.dumps(
+        {
+            "token": "access-token",
+            "refresh_token": "refresh-token",
+        }
+    )
     return mock_flow
 
 
@@ -31,16 +33,20 @@ def _run_login(config_dir: Path, mock_credentials: Path, mock_flow: MagicMock):
         patch("gw.auth._get_user_email", return_value="user@gmail.com"),
     ):
         runner = CliRunner()
-        return runner.invoke(main, [
-            "auth", "login",
-            "--credentials", str(mock_credentials),
-            "--config-dir", str(config_dir),
-        ])
+        return runner.invoke(
+            main,
+            [
+                "auth",
+                "login",
+                "--credentials",
+                str(mock_credentials),
+                "--config-dir",
+                str(config_dir),
+            ],
+        )
 
 
-def test_auth_login_copies_credentials_and_saves_token(
-    config_dir: Path, mock_credentials: Path
-) -> None:
+def test_auth_login_copies_credentials_and_saves_token(config_dir: Path, mock_credentials: Path) -> None:
     mock_flow = _make_mock_flow()
     result = _run_login(config_dir, mock_credentials, mock_flow)
 
@@ -50,9 +56,7 @@ def test_auth_login_copies_credentials_and_saves_token(
     assert token_path.exists()
 
 
-def test_auth_login_prints_url_explicitly(
-    config_dir: Path, mock_credentials: Path
-) -> None:
+def test_auth_login_prints_url_explicitly(config_dir: Path, mock_credentials: Path) -> None:
     """The consent URL must be printed via an explicit prompt message, not the
     library's mutable default, so the operator always sees a URL to open."""
     mock_flow = _make_mock_flow()
@@ -100,28 +104,42 @@ def test_auth_status_shows_active(sample_config: Path) -> None:
 def test_auth_switch(sample_config: Path) -> None:
     cfg_path = sample_config / "config.json"
     cfg = json.loads(cfg_path.read_text())
-    cfg["accounts"].append({
-        "email": "other@gmail.com",
-        "credentials": "credentials/other@gmail.com.json",
-        "added_at": "2026-04-16T11:00:00Z",
-    })
+    cfg["accounts"].append(
+        {
+            "email": "other@gmail.com",
+            "credentials": "credentials/other@gmail.com.json",
+            "added_at": "2026-04-16T11:00:00Z",
+        }
+    )
     cfg_path.write_text(json.dumps(cfg))
 
     runner = CliRunner()
-    result = runner.invoke(main, [
-        "auth", "switch", "other@gmail.com",
-        "--config-dir", str(sample_config),
-    ])
+    result = runner.invoke(
+        main,
+        [
+            "auth",
+            "switch",
+            "other@gmail.com",
+            "--config-dir",
+            str(sample_config),
+        ],
+    )
     assert result.exit_code == 0
     assert "other@gmail.com" in result.output
 
 
 def test_auth_remove(sample_config: Path) -> None:
     runner = CliRunner()
-    result = runner.invoke(main, [
-        "auth", "remove", "test@gmail.com",
-        "--config-dir", str(sample_config),
-    ])
+    result = runner.invoke(
+        main,
+        [
+            "auth",
+            "remove",
+            "test@gmail.com",
+            "--config-dir",
+            str(sample_config),
+        ],
+    )
     assert result.exit_code == 0
     result2 = runner.invoke(main, ["auth", "list", "--config-dir", str(sample_config)])
     assert "test@gmail.com" not in result2.output

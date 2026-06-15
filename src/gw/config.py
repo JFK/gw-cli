@@ -5,6 +5,7 @@ import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 DEFAULT_CONFIG_DIR = Path.home() / ".config" / "google-workspace-cli"
 
@@ -53,11 +54,13 @@ class GwConfig:
         for acct in self.accounts:
             if acct["email"] == email:
                 return
-        self.accounts.append({
-            "email": email,
-            "credentials": credentials_path,
-            "added_at": datetime.now(timezone.utc).isoformat(),
-        })
+        self.accounts.append(
+            {
+                "email": email,
+                "credentials": credentials_path,
+                "added_at": datetime.now(timezone.utc).isoformat(),
+            }
+        )
         if self.active_account is None:
             self.active_account = email
         self.save()
@@ -98,7 +101,7 @@ class GwConfig:
     def get_token_path(self, email: str) -> Path:
         return self.tokens_dir / f"{email}.json"
 
-    def get_default(self, service: str, key: str) -> object:
+    def get_default(self, service: str, key: str) -> Any:
         return self.defaults.get(service, {}).get(key)
 
     def set_default(self, service: str, key: str, value: object) -> None:

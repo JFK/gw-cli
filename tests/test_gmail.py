@@ -1,5 +1,4 @@
 import base64
-import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -39,9 +38,15 @@ def test_mail_list(mock_build: MagicMock, sample_config: Path) -> None:
     mock_build.return_value = mock_service
 
     runner = CliRunner()
-    result = runner.invoke(main, [
-        "--config-dir", str(sample_config), "mail", "list",
-    ])
+    result = runner.invoke(
+        main,
+        [
+            "--config-dir",
+            str(sample_config),
+            "mail",
+            "list",
+        ],
+    )
     assert result.exit_code == 0, result.output
     assert "Test Subject" in result.output
 
@@ -55,9 +60,16 @@ def test_mail_read(mock_build: MagicMock, sample_config: Path) -> None:
     mock_build.return_value = mock_service
 
     runner = CliRunner()
-    result = runner.invoke(main, [
-        "--config-dir", str(sample_config), "mail", "read", "msg1",
-    ])
+    result = runner.invoke(
+        main,
+        [
+            "--config-dir",
+            str(sample_config),
+            "mail",
+            "read",
+            "msg1",
+        ],
+    )
     assert result.exit_code == 0, result.output
     assert "Read Test" in result.output
 
@@ -69,13 +81,21 @@ def test_mail_send(mock_build: MagicMock, sample_config: Path) -> None:
     mock_build.return_value = mock_service
 
     runner = CliRunner()
-    result = runner.invoke(main, [
-        "--config-dir", str(sample_config),
-        "mail", "send",
-        "--to", "recipient@example.com",
-        "--subject", "Test",
-        "--body", "Hello",
-    ])
+    result = runner.invoke(
+        main,
+        [
+            "--config-dir",
+            str(sample_config),
+            "mail",
+            "send",
+            "--to",
+            "recipient@example.com",
+            "--subject",
+            "Test",
+            "--body",
+            "Hello",
+        ],
+    )
     assert result.exit_code == 0, result.output
     assert "sent" in result.output.lower() or "Sent" in result.output
 
@@ -87,10 +107,17 @@ def test_mail_mark_read(mock_build: MagicMock, sample_config: Path) -> None:
     mock_build.return_value = mock_service
 
     runner = CliRunner()
-    result = runner.invoke(main, [
-        "--config-dir", str(sample_config),
-        "mail", "mark", "msg1", "--read",
-    ])
+    result = runner.invoke(
+        main,
+        [
+            "--config-dir",
+            str(sample_config),
+            "mail",
+            "mark",
+            "msg1",
+            "--read",
+        ],
+    )
     assert result.exit_code == 0, result.output
     modify_call = mock_service.users().messages().modify
     call_kwargs = modify_call.call_args
@@ -109,9 +136,15 @@ def test_mail_labels(mock_build: MagicMock, sample_config: Path) -> None:
     mock_build.return_value = mock_service
 
     runner = CliRunner()
-    result = runner.invoke(main, [
-        "--config-dir", str(sample_config), "mail", "labels",
-    ])
+    result = runner.invoke(
+        main,
+        [
+            "--config-dir",
+            str(sample_config),
+            "mail",
+            "labels",
+        ],
+    )
     assert result.exit_code == 0, result.output
     assert "INBOX" in result.output
     assert "Work" in result.output
@@ -132,9 +165,15 @@ def test_mail_attachments(mock_build: MagicMock, sample_config: Path) -> None:
     mock_build.return_value = mock_service
 
     runner = CliRunner()
-    result = runner.invoke(main, [
-        "--config-dir", str(sample_config),
-        "mail", "attachments", "msg1",
-    ])
+    result = runner.invoke(
+        main,
+        [
+            "--config-dir",
+            str(sample_config),
+            "mail",
+            "attachments",
+            "msg1",
+        ],
+    )
     assert result.exit_code == 0, result.output
     assert "report.pdf" in result.output

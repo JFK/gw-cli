@@ -80,18 +80,27 @@ def list_messages(ctx: click.Context, query: str | None, limit: int | None, sinc
 
     messages = []
     for msg_meta in result.get("messages", []):
-        msg = service.users().messages().get(
-            userId="me", id=msg_meta["id"], format="metadata",
-            metadataHeaders=["Subject", "From", "Date"],
-        ).execute()
+        msg = (
+            service.users()
+            .messages()
+            .get(
+                userId="me",
+                id=msg_meta["id"],
+                format="metadata",
+                metadataHeaders=["Subject", "From", "Date"],
+            )
+            .execute()
+        )
         headers = msg.get("payload", {}).get("headers", [])
-        messages.append({
-            "id": msg["id"],
-            "subject": _get_header(headers, "Subject"),
-            "from": _get_header(headers, "From"),
-            "date": _get_header(headers, "Date"),
-            "unread": "UNREAD" in msg.get("labelIds", []),
-        })
+        messages.append(
+            {
+                "id": msg["id"],
+                "subject": _get_header(headers, "Subject"),
+                "from": _get_header(headers, "From"),
+                "date": _get_header(headers, "Date"),
+                "unread": "UNREAD" in msg.get("labelIds", []),
+            }
+        )
 
     click.echo(format_output(messages, output_json=output_json, account=account))
 
@@ -155,8 +164,12 @@ def reply(ctx: click.Context, message_id: str, body: str) -> None:
     output_json = ctx.obj.get("json", False)
 
     service = build_service(cfg, account, "gmail", "v1")
-    original = service.users().messages().get(userId="me", id=message_id, format="metadata",
-                                               metadataHeaders=["Subject", "From", "Message-ID"]).execute()
+    original = (
+        service.users()
+        .messages()
+        .get(userId="me", id=message_id, format="metadata", metadataHeaders=["Subject", "From", "Message-ID"])
+        .execute()
+    )
     headers = original.get("payload", {}).get("headers", [])
     subject = _get_header(headers, "Subject")
     sender = _get_header(headers, "From")
@@ -172,9 +185,15 @@ def reply(ctx: click.Context, message_id: str, body: str) -> None:
     message["References"] = msg_id_header
     raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
 
-    result = service.users().messages().send(
-        userId="me", body={"raw": raw, "threadId": original["threadId"]},
-    ).execute()
+    result = (
+        service.users()
+        .messages()
+        .send(
+            userId="me",
+            body={"raw": raw, "threadId": original["threadId"]},
+        )
+        .execute()
+    )
     click.echo(format_output(f"Replied (id: {result['id']})", output_json=output_json, account=account))
 
 
@@ -189,7 +208,7 @@ def list_labels(ctx: click.Context) -> None:
 
     service = build_service(cfg, account, "gmail", "v1")
     result = service.users().labels().list(userId="me").execute()
-    labels = [{"id": l["id"], "name": l["name"]} for l in result.get("labels", [])]
+    labels = [{"id": lbl["id"], "name": lbl["name"]} for lbl in result.get("labels", [])]
     click.echo(format_output(labels, output_json=output_json, account=account))
 
 
@@ -207,7 +226,8 @@ def modify_labels(ctx: click.Context, message_id: str, add_labels: tuple, remove
 
     service = build_service(cfg, account, "gmail", "v1")
     service.users().messages().modify(
-        userId="me", id=message_id,
+        userId="me",
+        id=message_id,
         body={"addLabelIds": list(add_labels), "removeLabelIds": list(remove_labels)},
     ).execute()
     click.echo(format_output("Labels updated.", output_json=output_json, account=account))
@@ -257,12 +277,14 @@ def attachments(ctx: click.Context, message_id: str) -> None:
     atts = []
     for part in _iter_parts(msg.get("payload", {})):
         if part.get("filename"):
-            atts.append({
-                "attachment_id": part["body"].get("attachmentId", ""),
-                "filename": part["filename"],
-                "mime_type": part.get("mimeType", ""),
-                "size": part["body"].get("size", 0),
-            })
+            atts.append(
+                {
+                    "attachment_id": part["body"].get("attachmentId", ""),
+                    "filename": part["filename"],
+                    "mime_type": part.get("mimeType", ""),
+                    "size": part["body"].get("size", 0),
+                }
+            )
 
     click.echo(format_output(atts, output_json=output_json, account=account))
 
@@ -280,12 +302,11 @@ def download(ctx: click.Context, message_id: str, attachment_id: str, out: str) 
     output_json = ctx.obj.get("json", False)
 
     service = build_service(cfg, account, "gmail", "v1")
-    att = service.users().messages().attachments().get(
-        userId="me", messageId=message_id, id=attachment_id
-    ).execute()
+    att = service.users().messages().attachments().get(userId="me", messageId=message_id, id=attachment_id).execute()
 
     data = base64.urlsafe_b64decode(att["data"])
     from pathlib import Path
+
     out_path = Path(out).resolve()
     out_path.write_bytes(data)
     click.echo(format_output(f"Downloaded to {out_path}", output_json=output_json, account=account))
@@ -313,24 +334,33 @@ def to_drive(ctx: click.Context, message_id: str, attachment_id: str, folder: st
             mime_type = part.get("mimeType", mime_type)
             break
 
-    att = gmail_service.users().messages().attachments().get(
-        userId="me", messageId=message_id, id=attachment_id
-    ).execute()
+    att = (
+        gmail_service.users()
+        .messages()
+        .attachments()
+        .get(userId="me", messageId=message_id, id=attachment_id)
+        .execute()
+    )
     data = base64.urlsafe_b64decode(att["data"])
 
     from googleapiclient.http import MediaInMemoryUpload
+
     drive_service = build_service(cfg, account, "drive", "v3")
     file_metadata: dict = {"name": filename}
     if folder:
         file_metadata["parents"] = [folder]
 
     media = MediaInMemoryUpload(data, mimetype=mime_type)
-    result = drive_service.files().create(
-        body=file_metadata, media_body=media, fields="id,name,webViewLink"
-    ).execute()
+    result = drive_service.files().create(body=file_metadata, media_body=media, fields="id,name,webViewLink").execute()
 
-    click.echo(format_output({
-        "id": result["id"],
-        "name": result["name"],
-        "link": result.get("webViewLink", ""),
-    }, output_json=output_json, account=account))
+    click.echo(
+        format_output(
+            {
+                "id": result["id"],
+                "name": result["name"],
+                "link": result.get("webViewLink", ""),
+            },
+            output_json=output_json,
+            account=account,
+        )
+    )

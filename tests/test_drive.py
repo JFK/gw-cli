@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -27,7 +26,8 @@ def test_drive_list(mock_build: MagicMock, sample_config: Path) -> None:
 def test_drive_upload(mock_build: MagicMock, sample_config: Path, tmp_path: Path) -> None:
     mock_service = MagicMock()
     mock_service.files().create().execute.return_value = {
-        "id": "new_f1", "name": "upload.txt",
+        "id": "new_f1",
+        "name": "upload.txt",
         "webViewLink": "https://drive.google.com/file/d/new_f1/view",
     }
     mock_build.return_value = mock_service
@@ -45,16 +45,26 @@ def test_drive_upload(mock_build: MagicMock, sample_config: Path, tmp_path: Path
 def test_drive_create(mock_build: MagicMock, sample_config: Path) -> None:
     mock_service = MagicMock()
     mock_service.files().create().execute.return_value = {
-        "id": "doc1", "name": "New Doc",
+        "id": "doc1",
+        "name": "New Doc",
         "webViewLink": "https://docs.google.com/document/d/doc1/edit",
     }
     mock_build.return_value = mock_service
 
     runner = CliRunner()
-    result = runner.invoke(main, [
-        "--config-dir", str(sample_config),
-        "drive", "create", "--type", "doc", "--title", "New Doc",
-    ])
+    result = runner.invoke(
+        main,
+        [
+            "--config-dir",
+            str(sample_config),
+            "drive",
+            "create",
+            "--type",
+            "doc",
+            "--title",
+            "New Doc",
+        ],
+    )
     assert result.exit_code == 0, result.output
     assert "New Doc" in result.output
 
@@ -66,10 +76,20 @@ def test_drive_share(mock_build: MagicMock, sample_config: Path) -> None:
     mock_build.return_value = mock_service
 
     runner = CliRunner()
-    result = runner.invoke(main, [
-        "--config-dir", str(sample_config),
-        "drive", "share", "f1", "--email", "user@example.com", "--role", "writer",
-    ])
+    result = runner.invoke(
+        main,
+        [
+            "--config-dir",
+            str(sample_config),
+            "drive",
+            "share",
+            "f1",
+            "--email",
+            "user@example.com",
+            "--role",
+            "writer",
+        ],
+    )
     assert result.exit_code == 0, result.output
     assert "Shared" in result.output
 
@@ -86,8 +106,16 @@ def test_drive_unshare(mock_build: MagicMock, sample_config: Path) -> None:
     mock_build.return_value = mock_service
 
     runner = CliRunner()
-    result = runner.invoke(main, [
-        "--config-dir", str(sample_config),
-        "drive", "unshare", "f1", "--email", "user@example.com",
-    ])
+    result = runner.invoke(
+        main,
+        [
+            "--config-dir",
+            str(sample_config),
+            "drive",
+            "unshare",
+            "f1",
+            "--email",
+            "user@example.com",
+        ],
+    )
     assert result.exit_code == 0, result.output

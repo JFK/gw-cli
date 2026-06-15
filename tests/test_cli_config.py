@@ -15,10 +15,17 @@ def test_config_show(sample_config: Path) -> None:
 
 def test_config_set(sample_config: Path) -> None:
     runner = CliRunner()
-    result = runner.invoke(main, [
-        "--config-dir", str(sample_config),
-        "config", "set", "defaults.calendar.days", "14",
-    ])
+    result = runner.invoke(
+        main,
+        [
+            "--config-dir",
+            str(sample_config),
+            "config",
+            "set",
+            "defaults.calendar.days",
+            "14",
+        ],
+    )
     assert result.exit_code == 0, result.output
 
     result2 = runner.invoke(main, ["--config-dir", str(sample_config), "config", "show"])
