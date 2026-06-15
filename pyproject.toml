@@ -1,14 +1,10 @@
-[build-system]
-requires = ["setuptools>=75.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
-name = "gw-cli"
-version = "0.1.0"
+name = "google-workspace-cli"
+dynamic = ["version"]
 description = "Google Workspace CLI for Claude Code — Calendar, Gmail, Drive with multi-account OAuth support"
-license = "MIT"
-requires-python = ">=3.10"
 readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
 keywords = ["google-workspace", "gmail", "calendar", "google-drive", "cli", "claude-code", "oauth2", "multi-account"]
 authors = [
     {name = "Fumikazu Kiyota", email = "fumikazu.kiyota@gmail.com"},
@@ -16,6 +12,7 @@ authors = [
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -32,16 +29,43 @@ dependencies = [
     "tzdata>=2024.1; platform_system == 'Windows'",
 ]
 
+[project.scripts]
+gw = "gw.cli:cli"
+
 [project.urls]
 Homepage = "https://github.com/JFK/gw-cli"
 Repository = "https://github.com/JFK/gw-cli"
 Issues = "https://github.com/JFK/gw-cli/issues"
 
-[project.scripts]
-gw = "gw.cli:cli"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.hatch.version]
+path = "src/gw/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gw"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.8.0",
+    "pyright>=1.1.0",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.pyright]
+include = ["src"]
+pythonVersion = "3.10"
+typeCheckingMode = "standard"

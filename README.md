@@ -1,5 +1,10 @@
 # gw-cli
 
+[![PyPI version](https://img.shields.io/pypi/v/google-workspace-cli.svg)](https://pypi.org/project/google-workspace-cli/)
+[![Python versions](https://img.shields.io/pypi/pyversions/google-workspace-cli.svg)](https://pypi.org/project/google-workspace-cli/)
+[![License: MIT](https://img.shields.io/pypi/l/google-workspace-cli.svg)](https://github.com/JFK/gw-cli/blob/master/LICENSE)
+[![CI](https://github.com/JFK/gw-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/JFK/gw-cli/actions/workflows/ci.yml)
+
 > **Google Workspace CLI for Claude Code — manage Calendar, Gmail, and Drive across multiple Google accounts.**
 
 `gw-cli` is a [Claude Code](https://claude.com/claude-code) plugin that brings Google Workspace into your terminal. Register multiple OAuth accounts, switch between them instantly, and let Claude Code operate your calendar, email, and files through natural language.
@@ -61,6 +66,14 @@ The plugin auto-installs the Python CLI and registers 7 skills:
 | `/gw-loop` | Periodic monitoring setup |
 
 ### Standalone CLI
+
+```bash
+pip install google-workspace-cli
+```
+
+> Published on PyPI as **`google-workspace-cli`** (the `gw-cli` name was already taken). The installed command is still `gw`.
+
+Latest from source:
 
 ```bash
 pip install git+https://github.com/JFK/gw-cli.git

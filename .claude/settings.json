@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "file_path=$(cat | jq -r '.tool_input.file_path // empty'); [ -z \"$file_path\" ] && exit 0; case \"$file_path\" in *.py) uv run ruff format --quiet \"$file_path\" 2>/dev/null;; esac; exit 0"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); CMD=$(echo \"$INPUT\" | jq -r '.tool_input.command // empty'); if echo \"$CMD\" | grep -qE 'gh pr (merge|create)'; then echo 'Reminder: Before PR, ensure /quality and /self-review have been run.' >&2; fi; if echo \"$CMD\" | grep -qE 'git tag v'; then echo 'Reminder: Bump the version in src/gw/__init__.py and the .claude-plugin manifests before tagging (use /release).' >&2; fi; exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}

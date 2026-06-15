@@ -10,8 +10,11 @@ tokens/
 .env.*
 *.json
 !.claude-plugin/*.json
+!.claude/settings.json
 !pyproject.toml
 .pytest_cache/
+.ruff_cache/
+.coverage
 
 # local OAuth client secret (never commit)
 credentials.json
