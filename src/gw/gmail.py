@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+from datetime import datetime
 from email.mime.text import MIMEText
 
 import click
@@ -15,6 +16,25 @@ def _get_header(headers: list[dict], name: str) -> str:
         if h["name"].lower() == name.lower():
             return h["value"]
     return ""
+
+
+def _iter_parts(payload: dict):
+    """Yield every MIME part in the payload tree, including nested multiparts."""
+    for part in payload.get("parts", []):
+        yield part
+        yield from _iter_parts(part)
+
+
+def _to_gmail_after(since: str) -> str:
+    """Convert an ISO datetime/date to a token Gmail's after: operator accepts.
+
+    Gmail only understands YYYY/MM/DD or Unix-epoch seconds, not ISO datetimes.
+    """
+    try:
+        dt = datetime.fromisoformat(since)
+    except ValueError:
+        return since  # assume the caller already passed a Gmail-acceptable token
+    return str(int(dt.timestamp()))
 
 
 def _decode_body(payload: dict) -> str:
@@ -48,11 +68,12 @@ def list_messages(ctx: click.Context, query: str | None, limit: int | None, sinc
     output_json = ctx.obj.get("json", False)
 
     if limit is None:
-        limit = cfg.get_default("mail", "limit") or 20
+        default_limit = cfg.get_default("mail", "limit")
+        limit = default_limit if default_limit is not None else 20
 
     search_query = query or cfg.get_default("mail", "check_query") or ""
     if since:
-        search_query += f" after:{since}"
+        search_query += f" after:{_to_gmail_after(since)}"
 
     service = build_service(cfg, account, "gmail", "v1")
     result = service.users().messages().list(userId="me", q=search_query, maxResults=limit).execute()
@@ -199,6 +220,9 @@ def modify_labels(ctx: click.Context, message_id: str, add_labels: tuple, remove
 @click.pass_context
 def mark(ctx: click.Context, message_id: str, mark_read: bool, mark_unread: bool) -> None:
     """Mark a message as read or unread."""
+    if mark_read == mark_unread:
+        raise click.UsageError("Specify exactly one of --read or --unread.")
+
     config_dir = ctx.obj.get("config_dir", DEFAULT_CONFIG_DIR)
     cfg = GwConfig(config_dir)
     account = cfg.resolve_account(ctx.obj.get("account"))
@@ -231,7 +255,7 @@ def attachments(ctx: click.Context, message_id: str) -> None:
     msg = service.users().messages().get(userId="me", id=message_id, format="full").execute()
 
     atts = []
-    for part in msg.get("payload", {}).get("parts", []):
+    for part in _iter_parts(msg.get("payload", {})):
         if part.get("filename"):
             atts.append({
                 "attachment_id": part["body"].get("attachmentId", ""),
@@ -283,9 +307,9 @@ def to_drive(ctx: click.Context, message_id: str, attachment_id: str, folder: st
     msg = gmail_service.users().messages().get(userId="me", id=message_id, format="full").execute()
     filename = ""
     mime_type = "application/octet-stream"
-    for part in msg.get("payload", {}).get("parts", []):
+    for part in _iter_parts(msg.get("payload", {})):
         if part.get("body", {}).get("attachmentId") == attachment_id:
-            filename = part.get("filename", "attachment")
+            filename = part.get("filename") or "attachment"
             mime_type = part.get("mimeType", mime_type)
             break
 

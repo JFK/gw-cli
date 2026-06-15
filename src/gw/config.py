@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import os
 from datetime import datetime, timezone
@@ -27,12 +28,12 @@ class GwConfig:
             data = json.loads(self.config_path.read_text())
             self.active_account: str | None = data.get("active_account")
             self.accounts: list[dict] = data.get("accounts", [])
-            self.defaults: dict = data.get("defaults", DEFAULT_DEFAULTS.copy())
+            self.defaults: dict = data["defaults"] if "defaults" in data else copy.deepcopy(DEFAULT_DEFAULTS)
             self.loop: dict = data.get("loop", {"mail_check_interval": "5m"})
         else:
             self.active_account = None
             self.accounts = []
-            self.defaults = DEFAULT_DEFAULTS.copy()
+            self.defaults = copy.deepcopy(DEFAULT_DEFAULTS)
             self.loop = {"mail_check_interval": "5m"}
 
     def save(self) -> None:

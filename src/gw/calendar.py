@@ -28,7 +28,8 @@ def list_events(ctx: click.Context, days: int | None) -> None:
     output_json = ctx.obj.get("json", False)
 
     if days is None:
-        days = cfg.get_default("calendar", "days") or 7
+        default_days = cfg.get_default("calendar", "days")
+        days = default_days if default_days is not None else 7
 
     service = build_service(cfg, account, "calendar", "v3")
     tz = cfg.get_default("calendar", "timezone") or "Asia/Tokyo"
@@ -189,10 +190,17 @@ def free(ctx: click.Context, date: str, account_override: str | None) -> None:
     output_json = ctx.obj.get("json", False)
     tz = cfg.get_default("calendar", "timezone") or "Asia/Tokyo"
 
+    try:
+        next_day = (datetime.strptime(date, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+    except ValueError as exc:
+        raise click.BadParameter(
+            f"Invalid date {date!r}; expected format 'YYYY-MM-DD'."
+        ) from exc
+
     service = build_service(cfg, account, "calendar", "v3")
     body = {
         "timeMin": _parse_datetime(f"{date} 00:00", tz),
-        "timeMax": _parse_datetime(f"{date} 23:59", tz),
+        "timeMax": _parse_datetime(f"{next_day} 00:00", tz),
         "timeZone": tz,
         "items": [{"id": account}],
     }
@@ -212,6 +220,11 @@ def free(ctx: click.Context, date: str, account_override: str | None) -> None:
 def _parse_datetime(dt_str: str, tz_name: str) -> str:
     """Parse 'YYYY-MM-DD HH:MM' into RFC3339 with timezone offset."""
     from zoneinfo import ZoneInfo
-    dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M")
+    try:
+        dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M")
+    except ValueError as exc:
+        raise click.BadParameter(
+            f"Invalid datetime {dt_str!r}; expected format 'YYYY-MM-DD HH:MM'."
+        ) from exc
     dt = dt.replace(tzinfo=ZoneInfo(tz_name))
     return dt.isoformat()
