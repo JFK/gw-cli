@@ -12,3 +12,6 @@ tokens/
 !.claude-plugin/*.json
 !pyproject.toml
 .pytest_cache/
+
+# local OAuth client secret (never commit)
+credentials.json

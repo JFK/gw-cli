@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import sys
 from pathlib import Path
 
 import click
@@ -17,6 +18,31 @@ SCOPES = [
     "https://www.googleapis.com/auth/gmail.send",
     "https://www.googleapis.com/auth/drive",
 ]
+
+
+def _can_auto_open_browser() -> bool:
+    """Whether auto-opening a browser is likely to reach the user.
+
+    On WSL2 and headless hosts the OS default URL handler is usually wrong (e.g. a
+    file manager) or absent, so an auto-opened consent page never appears. In those
+    cases the caller should skip the auto-open and let the operator open the printed
+    URL in any browser that can reach this host's localhost (a Windows browser
+    reaches WSL2 localhost). On native desktops (macOS / Windows / Linux with a
+    display) auto-open is the convenient one-step path.
+    """
+    if os.environ.get("WSL_DISTRO_NAME"):
+        return False
+    try:
+        with open("/proc/version", encoding="utf-8") as fh:
+            if "microsoft" in fh.read().lower():
+                return False
+    except OSError:
+        pass
+    if sys.platform.startswith("linux") and not (
+        os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")
+    ):
+        return False
+    return True
 
 
 def _get_user_email(credentials) -> str:
@@ -61,9 +87,23 @@ def login(ctx: click.Context, credentials: Path, config_dir: Path | None) -> Non
     flow = InstalledAppFlow.from_client_secrets_file(str(credentials), SCOPES)
 
     try:
-        flow.run_local_server(port=0, timeout_seconds=10)
+        # Loopback flow. Always print the consent URL explicitly (don't rely on
+        # the library's default prompt message) and keep the local server
+        # listening long enough for the operator to authorize. Only auto-open a
+        # browser where one is likely to reach the user: on WSL2/headless the OS
+        # default URL handler is often wrong (e.g. a file manager), so we skip the
+        # auto-open and let the operator open the printed URL in any browser that
+        # can reach this host's localhost (a Windows browser reaches WSL2 localhost).
+        flow.run_local_server(
+            port=0,
+            open_browser=_can_auto_open_browser(),
+            authorization_prompt_message=(
+                "\nOpen this URL in your browser to authorize:\n\n{url}\n"
+            ),
+            timeout_seconds=300,
+        )
     except Exception:
-        # Fallback for WSL2/remote: manual URL + paste redirect URL
+        # Last-resort manual paste (requires an interactive terminal for the prompt).
         auth_url, _ = flow.authorization_url(prompt="consent")
         click.echo(f"\nOpen this URL in your browser:\n\n{auth_url}\n")
         click.echo("After authorizing, you will be redirected to a localhost URL.")
