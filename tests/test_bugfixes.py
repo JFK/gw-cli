@@ -1,6 +1,7 @@
 """Regression tests for bugs found in the full-codebase debug review."""
 import json
 import re
+import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -8,7 +9,7 @@ import pytest
 from click.testing import CliRunner
 
 from gw.auth import build_service
-from gw.cli import main
+from gw.cli import cli, main
 from gw.config import DEFAULT_DEFAULTS, GwConfig
 
 
@@ -209,3 +210,34 @@ def test_cal_create_bad_datetime_is_friendly(mock_build: MagicMock, sample_confi
     assert result.exit_code != 0
     assert result.exception is None or isinstance(result.exception, SystemExit)
     assert "YYYY-MM-DD" in result.output
+
+
+# --- Finding 9: the CLI entry point turns RuntimeError/ValueError into a
+#     friendly message + non-zero exit instead of a raw traceback. ---
+
+
+def test_cli_entry_handles_runtime_error_friendly(config_dir: Path, monkeypatch, capsys) -> None:
+    # Empty config dir -> no active account -> resolve_account raises RuntimeError.
+    monkeypatch.setattr(sys, "argv", [
+        "gw", "--config-dir", str(config_dir), "cal", "list",
+    ])
+    with pytest.raises(SystemExit) as exc_info:
+        cli()
+    assert exc_info.value.code == 1
+    err = capsys.readouterr().err
+    assert "Error" in err
+    assert "No active account" in err
+
+
+def test_cli_entry_passes_through_success(sample_config: Path, monkeypatch, capsys) -> None:
+    monkeypatch.setattr(sys, "argv", [
+        "gw", "--config-dir", str(sample_config), "config", "show",
+    ])
+    with patch("gw.auth.build_service"):
+        # config show needs no network; should exit cleanly (0 or no SystemExit).
+        try:
+            cli()
+        except SystemExit as exc:
+            assert exc.code in (0, None)
+    out = capsys.readouterr().out
+    assert "active_account" in out
