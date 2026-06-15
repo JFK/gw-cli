@@ -16,6 +16,8 @@ def test_build_service_loads_token(sample_config: Path) -> None:
         "client_id": "test-client-id",
         "client_secret": "test-secret",
         "scopes": ["https://www.googleapis.com/auth/calendar"],
+        # Future expiry so the token is valid and no network refresh is attempted.
+        "expiry": "2099-12-31T23:59:59Z",
     }
     tokens_dir = sample_config / "tokens"
     tokens_dir.mkdir(exist_ok=True)

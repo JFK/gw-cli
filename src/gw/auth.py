@@ -158,11 +158,10 @@ def build_service(cfg: GwConfig, email: str, api_name: str, api_version: str):
             creds.refresh(Request())
             token_path.write_text(creds.to_json())
             os.chmod(token_path, 0o600)
-        except Exception:
-            click.echo(
-                f"Warning: Token refresh failed for {email}. "
-                "Run 'gw auth login --credentials <path>' to re-authenticate.",
-                err=True,
-            )
+        except Exception as exc:
+            raise RuntimeError(
+                f"Token refresh failed for {email}. "
+                "Run 'gw auth login --credentials <path>' to re-authenticate."
+            ) from exc
 
     return build(api_name, api_version, credentials=creds)
