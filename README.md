@@ -11,13 +11,15 @@
 
 ## 60-second quickstart
 
+> **Before you start:** `gw auth login` needs an OAuth **`credentials.json`** that you create once in Google Cloud (Desktop-app OAuth client). It is **not** shipped with the package. New here? Run **`/gw-setup`** in Claude Code for a guided walkthrough, or follow [Setup](#setup) below. (Running `gw auth login` without it prints these same instructions.)
+
 ```text
 # In any Claude Code session:
 /plugin marketplace add JFK/gw-cli
 /plugin install gw-cli
 
-# Setup (one-time):
-gw auth login --credentials ./credentials.json
+# One-time setup — see "Setup" below to obtain credentials.json first:
+gw auth login --credentials /path/to/credentials.json
 
 # Then use naturally:
 "Show me my unread emails"

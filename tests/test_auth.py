@@ -46,6 +46,33 @@ def _run_login(config_dir: Path, mock_credentials: Path, mock_flow: MagicMock):
         )
 
 
+def test_auth_login_missing_credentials_gives_setup_hint(config_dir: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "auth",
+            "login",
+            "--credentials",
+            str(config_dir / "nope.json"),
+            "--config-dir",
+            str(config_dir),
+        ],
+    )
+    assert result.exit_code != 0
+    # Actionable guidance, not a raw "path does not exist".
+    assert "/gw-setup" in result.output
+    assert "github.com/JFK/gw-cli#setup" in result.output
+
+
+def test_auth_status_no_account_points_to_setup(sample_config: Path) -> None:
+    # sample_config has an account; remove the active marker by using an empty config dir.
+    runner = CliRunner()
+    result = runner.invoke(main, ["--config-dir", str(sample_config.parent / "empty"), "auth", "status"])
+    assert result.exit_code == 0, result.output
+    assert "/gw-setup" in result.output
+
+
 def test_auth_login_copies_credentials_and_saves_token(config_dir: Path, mock_credentials: Path) -> None:
     mock_flow = _make_mock_flow()
     result = _run_login(config_dir, mock_credentials, mock_flow)

@@ -73,13 +73,24 @@ def auth(ctx: click.Context) -> None:
 
 
 @auth.command()
-@click.option("--credentials", required=True, type=click.Path(exists=True, path_type=Path))
+@click.option("--credentials", required=True, type=click.Path(path_type=Path))
 @_config_dir_option
 @click.pass_context
 def login(ctx: click.Context, credentials: Path, config_dir: Path | None) -> None:
     """Add a Google account via OAuth login."""
     resolved_dir = _resolve_config_dir(ctx, config_dir)
     cfg = GwConfig(resolved_dir)
+
+    if not credentials.exists():
+        raise click.BadParameter(
+            f"OAuth credentials file not found: {credentials}\n\n"
+            "This is a Desktop-app OAuth client JSON you create once in Google Cloud — "
+            "it is not shipped with gw-cli. To get one:\n"
+            "  • In Claude Code: run /gw-setup for a guided walkthrough, or\n"
+            "  • Follow the Setup guide: https://github.com/JFK/gw-cli#setup\n"
+            "Then re-run: gw auth login --credentials <path-to-downloaded.json>",
+            param_hint="--credentials",
+        )
 
     flow = InstalledAppFlow.from_client_secrets_file(str(credentials), SCOPES)
 
@@ -131,7 +142,11 @@ def list_accounts(ctx: click.Context, config_dir: Path | None) -> None:
     resolved_dir = _resolve_config_dir(ctx, config_dir)
     cfg = GwConfig(resolved_dir)
     if not cfg.accounts:
-        click.echo("No accounts registered. Run 'gw auth login' to add one.")
+        click.echo(
+            "No accounts registered. First-time setup: run /gw-setup in Claude Code "
+            "or see https://github.com/JFK/gw-cli#setup, then "
+            "'gw auth login --credentials <path>'."
+        )
         return
     for acct in cfg.accounts:
         marker = " *" if acct["email"] == cfg.active_account else ""
@@ -148,7 +163,11 @@ def status(ctx: click.Context, config_dir: Path | None) -> None:
     if cfg.active_account:
         click.echo(f"Active account: {cfg.active_account}")
     else:
-        click.echo("No active account. Run 'gw auth login' to add one.")
+        click.echo(
+            "No active account. First-time setup: run /gw-setup in Claude Code "
+            "or see https://github.com/JFK/gw-cli#setup, then "
+            "'gw auth login --credentials <path>'."
+        )
 
 
 @auth.command()
