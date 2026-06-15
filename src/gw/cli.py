@@ -1,4 +1,5 @@
 import json as json_module
+import sys
 
 import click
 
@@ -92,5 +93,26 @@ def set_config(ctx: click.Context, key: str, value: str) -> None:
 main.add_command(config_group)
 
 
+def cli() -> None:
+    """Console-script entry point with friendly top-level error handling.
+
+    Click only renders ClickException subclasses nicely; uncaught RuntimeError
+    or ValueError (raised by build_service, resolve_account, config loading,
+    etc.) would otherwise surface as a raw Python traceback. Catch those here
+    and report a one-line error with a non-zero exit code.
+    """
+    try:
+        main(standalone_mode=False)
+    except click.ClickException as exc:
+        exc.show()
+        sys.exit(exc.exit_code)
+    except click.exceptions.Abort:
+        click.echo("Aborted.", err=True)
+        sys.exit(1)
+    except (RuntimeError, ValueError) as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(1)
+
+
 if __name__ == "__main__":
-    main()
+    cli()

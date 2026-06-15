@@ -39,7 +39,7 @@ Repository = "https://github.com/JFK/gw-cli"
 Issues = "https://github.com/JFK/gw-cli/issues"
 
 [project.scripts]
-gw = "gw.cli:main"
+gw = "gw.cli:cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]
