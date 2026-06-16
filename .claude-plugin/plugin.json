@@ -1,6 +1,6 @@
 {
   "name": "gw-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Google Workspace CLI for Claude Code — Calendar, Gmail, Drive with multi-account support",
   "author": {
     "name": "Fumikazu Kiyota",
